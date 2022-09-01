@@ -1,11 +1,13 @@
-ARG BASE_IMAGE=debian:11.4-slim@sha256:68c1f6bae105595d2ebec1589d9d476ba2939fdb11eaba1daec4ea826635ce75
+ARG BASE_IMAGE=senzing/senzingapi-runtime:3.2.0
 FROM ${BASE_IMAGE}
 
 ENV REFRESHED_AT=2022-08-25
 
-LABEL Name="senzing/template-python" \
+LABEL Name="senzing/keystore-generator" \
       Maintainer="support@senzing.com" \
       Version="1.0.0"
+
+# Define health check.
 
 HEALTHCHECK CMD ["/app/healthcheck.sh"]
 
@@ -15,31 +17,60 @@ USER root
 
 # Install packages via apt.
 
-RUN apt-get update \
- && apt-get -y install \
-      less \
+RUN apt update \
+ && apt -y install \
+      gnupg2 \
+      libaio1 \
+      libodbc1 \
+      odbc-postgresql \
       python3 \
       python3-pip \
+      software-properties-common \
+      wget \
  && rm -rf /var/lib/apt/lists/*
 
 # Install packages via PIP.
 
-COPY requirements.txt ./
+COPY requirements.txt .
 RUN pip3 install --upgrade pip \
  && pip3 install -r requirements.txt \
- && rm requirements.txt
-
-# Install packages via apt.
+ && rm /requirements.txt
 
 # Copy files from repository.
 
 COPY ./rootfs /
+COPY ./keystore-generator.py /app/
+
+# Set environment variables for root.
+
+ENV LD_LIBRARY_PATH=/opt/senzing/g2/lib:/opt/senzing/g2/lib/debian:/opt/IBM/db2/clidriver/lib
+ENV ODBCSYSINI=/etc/opt/senzing
+ENV PATH=${PATH}:/opt/senzing/g2/python:/opt/IBM/db2/clidriver/adm:/opt/IBM/db2/clidriver/bin
+ENV PYTHONPATH=/opt/senzing/g2/sdk/python
+
+# Install Java 11
+
+RUN wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public > gpg.key \
+ && cat gpg.key | apt-key add - \
+ && add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ \
+ && apt update \
+ && apt install -y adoptopenjdk-11-hotspot \
+ && rm -rf /var/lib/apt/lists/* \
+ && rm -f gpg.key
 
 # Make non-root container.
 
-USER 1001
+USER 1001:1001
+
+# Set environment variables for USER 1001.
+
+ENV LD_LIBRARY_PATH=/opt/senzing/g2/lib:/opt/senzing/g2/lib/debian
+ENV ODBCSYSINI=/etc/opt/senzing
+ENV PATH=${PATH}:/opt/senzing/g2/python
+ENV PYTHONPATH=/opt/senzing/g2/sdk/python
+ENV SENZING_DOCKER_LAUNCHED=true
 
 # Runtime execution.
 
 WORKDIR /app
-CMD ["/app/sleep-infinity.sh"]
+ENTRYPOINT ["/app/keystore-generator.py"]
