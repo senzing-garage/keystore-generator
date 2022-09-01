@@ -2,26 +2,14 @@
 
 '''
 # -----------------------------------------------------------------------------
-# template-python.py Example python skeleton.
-# Can be used as a boiler-plate to build new python scripts.
-# This skeleton implements the following features:
-#   1) "command subcommand" command line.
-#   2) A structured command line parser and "-help"
-#   3) Configuration via:
-#      3.1) Command line options
-#      3.2) Environment variables
-#      3.3) Configuration file
-#      3.4) Default
-#   4) Messages dictionary
-#   5) Logging and Log Level support.
-#   6) Entry / Exit log messages.
-#   7) Docker support.
+# keystore-generator.py
 # -----------------------------------------------------------------------------
 '''
 
 # Import from standard library. https://docs.python.org/3/library/
 
 import argparse
+import base64
 import json
 import linecache
 import logging
@@ -29,26 +17,21 @@ import os
 import signal
 import sys
 import time
+from shutil import which
 
 # Import from https://pypi.org/
+
+import boto3
 
 # Metadata
 
 __all__ = []
 __version__ = "1.0.0"  # See https://www.python.org/dev/peps/pep-0396/
-__date__ = '2019-07-16'
-__updated__ = '2022-05-18'
+__date__ = '2022-09-01'
+__updated__ = '2022-09-01'
 
-# See https://github.com/Senzing/knowledge-base/blob/main/lists/senzing-product-ids.md
-
-SENZING_PRODUCT_ID = "5xxx"
+SENZING_PRODUCT_ID = "5032"  # See https://github.com/Senzing/knowledge-base/blob/main/lists/senzing-product-ids.md
 LOG_FORMAT = '%(asctime)s %(message)s'
-
-# Working with bytes.
-
-KILOBYTES = 1024
-MEGABYTES = 1024 * KILOBYTES
-GIGABYTES = 1024 * MEGABYTES
 
 # The "configuration_locator" describes where configuration variables are in:
 # 1) Command line options, 2) Environment variables, 3) Configuration files, 4) Default values
@@ -59,20 +42,24 @@ CONFIGURATION_LOCATOR = {
         "env": "SENZING_DEBUG",
         "cli": "debug"
     },
-    "password": {
-        "default": None,
-        "env": "SENZING_PASSWORD",
-        "cli": "password"
+    "delay_in_seconds": {
+        "default": 0,
+        "env": "SENZING_DELAY_IN_SECONDS",
+        "cli": "delay-in-seconds"
     },
-    "senzing_dir": {
-        "default": "/opt/senzing",
-        "env": "SENZING_DIR",
-        "cli": "senzing-dir"
+    "etc_dir": {
+        "default": "/etc/opt/senzing",
+        "env": "SENZING_ETC_DIR",
+        "cli": "etc-dir"
     },
     "sleep_time_in_seconds": {
         "default": 0,
         "env": "SENZING_SLEEP_TIME_IN_SECONDS",
         "cli": "sleep-time-in-seconds"
+    },
+    "stackname": {
+        "default": None,
+        "env": "SENZING_STACK_NAME",
     },
     "subcommand": {
         "default": None,
@@ -82,9 +69,7 @@ CONFIGURATION_LOCATOR = {
 
 # Enumerate keys in 'configuration_locator' that should not be printed to the log.
 
-KEYS_TO_REDACT = [
-    "password",
-]
+KEYS_TO_REDACT = []
 
 # -----------------------------------------------------------------------------
 # Define argument parser
@@ -95,27 +80,21 @@ def get_parser():
     ''' Parse commandline arguments. '''
 
     subcommands = {
-        'task1': {
-            "help": 'Example task #1.',
+        'aws': {
+            "help": 'Create a keystore for AWS',
             "argument_aspects": ["common"],
             "arguments": {
-                "--senzing-dir": {
-                    "dest": "senzing_dir",
-                    "metavar": "SENZING_DIR",
-                    "help": "Location of Senzing. Default: /opt/senzing"
+                "--etc-dir": {
+                    "dest": "etc_dir",
+                    "metavar": "SENZING_ETC_DIR",
+                    "help": "Location of senzing etc directory. Default: /etc/opt/senzing"
                 },
-            },
-        },
-        'task2': {
-            "help": 'Example task #2.',
-            "argument_aspects": ["common"],
-            "arguments": {
-                "--password": {
-                    "dest": "password",
-                    "metavar": "SENZING_PASSWORD",
-                    "help": "Example of information redacted in the log. Default: None"
-                },
-            },
+                "--stackname": {
+                    "dest": "stackname",
+                    "metavar": "SENZING_STACK_NAME",
+                    "help": "AWS cloudformation stack name. Default: none"
+                }
+            }
         },
         'sleep': {
             "help": 'Do nothing but sleep. For Docker testing.',
@@ -144,12 +123,12 @@ def get_parser():
                 "action": "store_true",
                 "help": "Enable debugging. (SENZING_DEBUG) Default: False"
             },
-            "--engine-configuration-json": {
-                "dest": "engine_configuration_json",
-                "metavar": "SENZING_ENGINE_CONFIGURATION_JSON",
-                "help": "Advanced Senzing engine configuration. Default: none"
-            },
-        },
+            "--delay-in-seconds": {
+                "dest": "delay_in_seconds",
+                "metavar": "SENZING_DELAY_IN_SECONDS",
+                "help": "Delay before processing in seconds. DEFAULT: 0"
+            }
+        }
     }
 
     # Augment "subcommands" variable with arguments specified by aspects.
@@ -163,7 +142,9 @@ def get_parser():
                 for argument, argument_value in arguments.items():
                     subcommand_value['arguments'][argument] = argument_value
 
-    parser = argparse.ArgumentParser(prog="template-python.py", description="Add description. For more information, see https://github.com/Senzing/template-python")
+    # Parse command line arguments.
+
+    parser = argparse.ArgumentParser(prog="keystore-generator.py", description="Initialize Senzing installation. For more information, see https://github.com/Senzing/keystore-generator")
     subparsers = parser.add_subparsers(dest='subcommand', help='Subcommands (SENZING_SUBCOMMAND):')
 
     for subcommand_key, subcommand_values in subcommands.items():
@@ -193,8 +174,8 @@ MESSAGE_DEBUG = 900
 
 MESSAGE_DICTIONARY = {
     "100": "senzing-" + SENZING_PRODUCT_ID + "{0:04d}I",
-    "292": "Configuration change detected.  Old: {0} New: {1}",
-    "293": "For information on warnings and errors, see https://github.com/Senzing/stream-loader#errors",
+    "157": "{0} - Creating file",
+    "293": "For information on warnings and errors, see https://github.com/Senzing/keystore-generator#errors",
     "294": "Version: {0}  Updated: {1}",
     "295": "Sleeping infinitely.",
     "296": "Sleeping {0} seconds.",
@@ -204,27 +185,15 @@ MESSAGE_DICTIONARY = {
     "300": "senzing-" + SENZING_PRODUCT_ID + "{0:04d}W",
     "499": "{0}",
     "500": "senzing-" + SENZING_PRODUCT_ID + "{0:04d}E",
-    "695": "Unknown database scheme '{0}' in database url '{1}'",
-    "696": "Bad SENZING_SUBCOMMAND: {0}.",
     "697": "No processing done.",
     "698": "Program terminated with error.",
     "699": "{0}",
     "700": "senzing-" + SENZING_PRODUCT_ID + "{0:04d}E",
-    "885": "License has expired.",
-    "886": "G2Engine.addRecord() bad return code: {0}; JSON: {1}",
-    "888": "G2Engine.addRecord() G2ModuleNotInitialized: {0}; JSON: {1}",
-    "889": "G2Engine.addRecord() G2ModuleGenericException: {0}; JSON: {1}",
-    "890": "G2Engine.addRecord() Exception: {0}; JSON: {1}",
-    "891": "Original and new database URLs do not match. Original URL: {0}; Reconstructed URL: {1}",
-    "892": "Could not initialize G2Product with '{0}'. Error: {1}",
-    "893": "Could not initialize G2Hasher with '{0}'. Error: {1}",
-    "894": "Could not initialize G2Diagnostic with '{0}'. Error: {1}",
-    "895": "Could not initialize G2Audit with '{0}'. Error: {1}",
-    "896": "Could not initialize G2ConfigMgr with '{0}'. Error: {1}",
-    "897": "Could not initialize G2Config with '{0}'. Error: {1}",
-    "898": "Could not initialize G2Engine with '{0}'. Error: {1}",
+    "898": "Environment variable / command-line option not set: {0}",
     "899": "{0}",
     "900": "senzing-" + SENZING_PRODUCT_ID + "{0:04d}D",
+    "950": "Enter function: {0}",
+    "951": "Exit  function: {0}",
     "998": "Debugging enabled.",
     "999": "{0}",
 }
@@ -329,7 +298,7 @@ def get_configuration(subcommand, args):
     # Special case: Change boolean strings to booleans.
 
     booleans = [
-        'debug'
+        'debug',
     ]
     for boolean in booleans:
         boolean_value = result.get(boolean)
@@ -343,7 +312,8 @@ def get_configuration(subcommand, args):
     # Special case: Change integer strings to integers.
 
     integers = [
-        'sleep_time_in_seconds'
+        'delay_in_seconds',
+        'sleep_time_in_seconds',
     ]
     for integer in integers:
         integer_string = result.get(integer)
@@ -362,10 +332,10 @@ def validate_configuration(config):
 
     subcommand = config.get('subcommand')
 
-    if subcommand in ['task1', 'task2']:
+    if subcommand in ['aws']:
 
-        if not config.get('senzing_dir'):
-            user_error_messages.append(message_error(414))
+        if config.get('stackname') is None:
+            user_error_messages.append(message_error(898, "SENZING_STACK_NAME"))
 
     # Log warning messages.
 
@@ -422,6 +392,14 @@ def create_signal_handler_function(args):
     return result_function
 
 
+def delay(config):
+    ''' Sleep for a period of time. '''
+    delay_in_seconds = config.get('delay_in_seconds')
+    if delay_in_seconds > 0:
+        logging.info(message_info(296, delay_in_seconds))
+        time.sleep(delay_in_seconds)
+
+
 def entry_template(config):
     ''' Format of entry message. '''
     debug = config.get("debug", False)
@@ -460,6 +438,60 @@ def exit_silently():
     sys.exit(0)
 
 # -----------------------------------------------------------------------------
+# worker functions
+# -----------------------------------------------------------------------------
+
+
+def create_keystore_truststore(config):
+    ''' Create key stores and trust stores, which are used by Senzing API server'''
+    etc_dir = config.get("etc_dir")
+
+    # default keystore password is change-it
+    server_keystore_password = "change-it" if os.getenv("SENZING_API_SERVER_KEY_STORE_PASSWORD") is None else os.getenv("SENZING_API_SERVER_KEY_STORE_PASSWORD")
+    client_keystore_password = "change-it" if os.getenv("SENZING_API_SERVER_CLIENT_KEY_STORE_PASSWORD") is None else os.getenv("SENZING_API_SERVER_CLIENT_KEY_STORE_PASSWORD")
+
+    # Create server key store
+    os.system("keytool -genkey -alias sz-api-server -keystore {0}/sz-api-server-store.p12 -storetype PKCS12 -keyalg RSA -storepass {1} -validity 730 -keysize 2048 -dname 'CN=Unknown, OU=Unknown, O=Unknown, L=Unknown, ST=Unknown, C=Unknown'".format(etc_dir, server_keystore_password))
+
+    # Create client key store
+    os.system("keytool -genkey -alias my-client -keystore {0}/my-client-key-store.p12 -storetype PKCS12 -keyalg RSA -storepass {1} -validity 730 -keysize 2048 -dname 'CN=Unknown, OU=Unknown, O=Unknown, L=Unknown, ST=Unknown, C=Unknown'".format(etc_dir, client_keystore_password))
+
+    # Create client certificate with client key store
+    os.system("keytool -export -keystore {0}/my-client-key-store.p12 -storepass {1} -storetype PKCS12 -alias my-client -file {0}/my-client.cer".format(etc_dir, client_keystore_password))
+
+    # Add client certificate to client trust store
+    os.system("keytool -import -file {0}/my-client.cer -alias my-client -keystore {0}/my-client-trust-store.p12 -storetype PKCS12 -storepass {1} -noprompt".format(etc_dir, client_keystore_password))
+
+    # base64 encode client key store
+    encoded_keystore = ""
+    with open("{0}/my-client-key-store.p12".format(etc_dir), "rb") as keystore:
+        encoded_keystore_bytes = base64.b64encode(keystore.read())
+        encoded_keystore = encoded_keystore_bytes.decode('ascii')
+
+    logging.info(message_info(157, "sz-api-server-store.p12"))
+    logging.info(message_info(157, "my-client-key-store.p12"))
+    logging.info(message_info(157, "my-client.cer"))
+    logging.info(message_info(157, "my-client-trust-store.p12"))
+
+    return encoded_keystore
+
+
+def upload_aws_secrets_manager(config, base64_client_keystore):
+    ''' Upload client keystore to AWS secrets manager '''
+
+    aws_stack_name = config.get("stackname")
+    current_region = os.getenv("AWS_REGION")
+    client = boto3.Session(region_name=current_region).client('secretsmanager')
+    response = client.create_secret(
+        Description='Base64 representation of Senzing Api Server client key store',
+        Name=aws_stack_name + '-client-keystore-base64',
+        SecretString=base64_client_keystore
+    )
+
+    # double check with michael if this is the correct message code
+    logging.info(message_info(299, response))
+
+# -----------------------------------------------------------------------------
 # do_* functions
 #   Common function signature: do_XXX(args)
 # -----------------------------------------------------------------------------
@@ -481,41 +513,23 @@ def do_docker_acceptance_test(subcommand, args):
     logging.info(exit_template(config))
 
 
-def do_task1(subcommand, args):
+def do_aws(subcommand, args):
     ''' Do a task. '''
 
     # Get context from CLI, environment variables, and ini files.
 
     config = get_configuration(subcommand, args)
+    validate_configuration(config)
 
     # Prolog.
 
     logging.info(entry_template(config))
 
-    # Do work.
+    # If requested, create sz-api-server-store.p12 my-client-key-store.p12 my-client.cer my-client-trust-store.p12
 
-    print("senzing-dir: {senzing_dir}; debug: {debug}".format(**config))
-
-    # Epilog.
-
-    logging.info(exit_template(config))
-
-
-def do_task2(subcommand, args):
-    ''' Do a task. Print the complete config object'''
-
-    # Get context from CLI, environment variables, and ini files.
-
-    config = get_configuration(subcommand, args)
-
-    # Prolog.
-
-    logging.info(entry_template(config))
-
-    # Do work.
-
-    config_json = json.dumps(config, sort_keys=True, indent=4)
-    print(config_json)
+    if which("keytool") is not None:
+        base64_client_keystore = create_keystore_truststore(config)
+        upload_aws_secrets_manager(config, base64_client_keystore)
 
     # Epilog.
 
@@ -619,7 +633,7 @@ if __name__ == "__main__":
     # Test to see if function exists in the code.
 
     if SUBCOMMAND_FUNCTION_NAME not in globals():
-        logging.warning(message_warning(696, SUBCOMMAND))
+        logging.warning(message_warning(596, SUBCOMMAND))
         PARSER.print_help()
         exit_silently()
 

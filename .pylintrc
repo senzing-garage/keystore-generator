@@ -2,11 +2,12 @@
 disable=
     broad-except,
     consider-using-f-string,
+    import-error,
     line-too-long,
     too-many-branches,
     too-many-locals,
 good-names=
-    template-python
+    keystore-generator
 ignore=
     __init__.py,
 notes=
