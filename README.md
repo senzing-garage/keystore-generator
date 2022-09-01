@@ -14,6 +14,8 @@ To see all of the subcommands, run:
 
 ```console
 $ ./keystore-generator.py...
+
+result...
 ```
 
 ### Contents
@@ -72,7 +74,7 @@ describing where we can improve.   Now on with the show...
    Example:
 
     ```console
-    export SENZING_SUBCOMMAND=...
+    export SENZING_SUBCOMMAND=aws
     ```
 
 1. :thinking: If running an `aws` Senzing subcommand, specify stack....
@@ -80,7 +82,7 @@ describing where we can improve.   Now on with the show...
    Example:
 
     ```console
-    export SENZING_STACK_NAME=...
+    export SENZING_STACK_NAME=example_stack
     ```
 
 1. Run Docker container.
@@ -122,6 +124,21 @@ describing where we can improve.   Now on with the show...
 
     ```console
     mkdir -p ${SENZING_ETC_DIR}
+    ```
+
+1. :pencil2: Specify environment...
+   Example:
+
+    ```console
+    export SENZING_SUBCOMMAND=aws
+    ```
+
+1. :thinking: If running an `aws` Senzing subcommand, specify stack....
+
+   Example:
+
+    ```console
+    export SENZING_STACK_NAME=example_stack
     ```
 
 1. Get versions of Docker images.
