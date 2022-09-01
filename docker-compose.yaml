@@ -1,0 +1,19 @@
+version: '3'
+services:
+
+  keystore-generator:
+    container_name: senzing-keystore-generator
+    environment:
+      SENZING_STACK_NAME: ${SENZING_STACK_NAME:-fixme}
+    image: senzing/keystore-generator:${SENZING_DOCKER_IMAGE_VERSION_KEYSTORE_GENERATOR:-latest}
+    networks:
+      - senzing
+    read_only: true
+    restart: on-failure
+    user: ${SENZING_UID:-1001}:${SENZING_GID:-1001}
+    volumes:
+      - ${SENZING_ETC_DIR:-/etc/opt/senzing}:/etc/opt/senzing
+
+networks:
+  senzing:
+    name: ${SENZING_DOCKER_NETWORK:-senzing-network}

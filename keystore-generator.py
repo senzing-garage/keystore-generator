@@ -52,11 +52,6 @@ CONFIGURATION_LOCATOR = {
         "env": "SENZING_ETC_DIR",
         "cli": "etc-dir"
     },
-    "generate_ssl_keystore": {
-        "default": False,
-        "env": "SENZING_GENERATE_SSL_KEYSTORE",
-        "cli": "generate-ssl-keystore"
-    },
     "sleep_time_in_seconds": {
         "default": 0,
         "env": "SENZING_SLEEP_TIME_IN_SECONDS",
