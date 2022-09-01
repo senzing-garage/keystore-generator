@@ -180,7 +180,7 @@ MESSAGE_DEBUG = 900
 MESSAGE_DICTIONARY = {
     "100": "senzing-" + SENZING_PRODUCT_ID + "{0:04d}I",
     "157": "{0} - Creating file",
-    "293": "For information on warnings and errors, see https://github.com/Senzing/stream-loader#errors",
+    "293": "For information on warnings and errors, see https://github.com/Senzing/keystore-generator#errors",
     "294": "Version: {0}  Updated: {1}",
     "295": "Sleeping infinitely.",
     "296": "Sleeping {0} seconds.",
@@ -190,9 +190,11 @@ MESSAGE_DICTIONARY = {
     "300": "senzing-" + SENZING_PRODUCT_ID + "{0:04d}W",
     "499": "{0}",
     "500": "senzing-" + SENZING_PRODUCT_ID + "{0:04d}E",
+    "697": "No processing done.",
     "698": "Program terminated with error.",
     "699": "{0}",
     "700": "senzing-" + SENZING_PRODUCT_ID + "{0:04d}E",
+    "898": "Environment variable / command-line option not set: {0}",
     "899": "{0}",
     "900": "senzing-" + SENZING_PRODUCT_ID + "{0:04d}D",
     "950": "Enter function: {0}",
@@ -335,8 +337,10 @@ def validate_configuration(config):
 
     subcommand = config.get('subcommand')
 
-    if subcommand in ['service', 'file-input']:
-        pass
+    if subcommand in ['aws']:
+
+        if config.get('stackname') is None:
+            user_error_messages.append(message_error(898, "SENZING_STACK_NAME"))
 
     # Log warning messages.
 
@@ -356,7 +360,7 @@ def validate_configuration(config):
     # If there are error messages, exit.
 
     if len(user_error_messages) > 0:
-        exit_error(597)
+        exit_error(697)
 
 
 def redact_configuration(config):
@@ -520,6 +524,7 @@ def do_aws(subcommand, args):
     # Get context from CLI, environment variables, and ini files.
 
     config = get_configuration(subcommand, args)
+    validate_configuration(config)
 
     # Prolog.
 
