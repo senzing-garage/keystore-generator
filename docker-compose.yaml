@@ -6,6 +6,7 @@ services:
     environment:
       SENZING_STACK_NAME: ${SENZING_STACK_NAME:-fixme}
       SENZING_SUBCOMMAND: ${SENZING_SUBCOMMAND:-aws}
+      SENZING_ETC_DIR: ${SENZING_ETC_DIR:-/etc/opt/senzing}
     image: senzing/keystore-generator:${SENZING_DOCKER_IMAGE_VERSION_KEYSTORE_GENERATOR:-latest}
     networks:
       - senzing

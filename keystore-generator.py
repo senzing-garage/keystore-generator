@@ -81,7 +81,7 @@ def get_parser():
 
     subcommands = {
         'aws': {
-            "help": 'Create a keystore for AWS',
+            "help": 'Generate a java keystore for ssl client authentication in an AWS environment',
             "argument_aspects": ["common"],
             "arguments": {
                 "--etc-dir": {

@@ -2,20 +2,32 @@
 
 ## Synopsis
 
-Generates...
+Generates a client and server java keystore that is used to provide client SSL authentication for [Senzing API Server](https://github.com/Senzing/senzing-api-server) and [Senzing POC Server](https://github.com/Senzing/senzing-poc-server).
 
 ## Overview
 
-The [keystore-generator.py](keystore-generator.py) python script is a "run-to-completion" job that...
+The [keystore-generator.py](keystore-generator.py) python script is a "run-to-completion" job that generates a client and server java keystore in a stipulated folder.
 
 The `senzing/kenstore-generator` Docker image is a wrapper for use in Docker formations (e.g. docker-compose, kubernetes).
 
 To see all of the subcommands, run:
 
 ```console
-$ ./keystore-generator.py...
+$ ./keystore-generator.py 
+usage: keystore-generator.py [-h] {aws,sleep,version,docker-acceptance-test} ...
 
-result...
+Initialize Senzing installation. For more information, see https://github.com/Senzing/keystore-generator
+
+positional arguments: {aws,sleep,version,docker-acceptance-test}
+Subcommands (SENZING_SUBCOMMAND):
+    aws                 Create a keystore for AWS
+    sleep               Do nothing but sleep. For Docker testing.
+    version             Print version of program.
+    docker-acceptance-test
+                        For Docker acceptance testing.
+
+optional arguments:
+  -h, --help            show this help message and exit
 ```
 
 ### Contents
@@ -70,19 +82,20 @@ describing where we can improve.   Now on with the show...
 
 ## Demonstrate using Docker
 
-1. :pencil2: Specify environment...
+1. :pencil2: Specify the subcommand
    Example:
 
     ```console
     export SENZING_SUBCOMMAND=aws
     ```
 
-1. :thinking: If running an `aws` Senzing subcommand, specify stack....
+1. :thinking: If running an `aws` Senzing subcommand, specify stack and an etc directory
 
    Example:
 
     ```console
     export SENZING_STACK_NAME=example_stack
+    export SENZING_ETC_DIR=/etc/opt/senzing
     ```
 
 1. Run Docker container.
@@ -92,6 +105,7 @@ describing where we can improve.   Now on with the show...
     sudo --preserve-env docker run \
       --env SENZING_STACK_NAME \
       --env SENZING_SUBCOMMAND \
+      --env SENZING_ETC_DIR \
       --rm \
       senzing/keystore-generator
     ```
