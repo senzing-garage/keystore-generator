@@ -2,7 +2,7 @@
 
 ## Synopsis
 
-Generates...
+Generates a client and server java keystore that is used to provide client SSL authentication for [Senzing API Server](https://github.com/Senzing/senzing-api-server) and [Senzing POC Server](https://github.com/Senzing/senzing-poc-server).
 
 ## Overview
 
