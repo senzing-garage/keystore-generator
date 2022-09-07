@@ -6,7 +6,7 @@ Generates a client and server java keystore that is used to provide client SSL a
 
 ## Overview
 
-The [keystore-generator.py](keystore-generator.py) python script is a "run-to-completion" job that...
+The [keystore-generator.py](keystore-generator.py) python script is a "run-to-completion" job that generates a client and server java keystore in a stipulated folder.
 
 The `senzing/kenstore-generator` Docker image is a wrapper for use in Docker formations (e.g. docker-compose, kubernetes).
 
