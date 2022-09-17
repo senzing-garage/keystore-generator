@@ -312,34 +312,6 @@ def get_configuration(subcommand, args):
 
     return result
 
-
-def validate_configuration(config):
-    ''' Check aggregate configuration from commandline options, environment variables, config files, and defaults. '''
-
-    user_warning_messages = []
-    user_error_messages = []
-
-    # Log warning messages.
-
-    for user_warning_message in user_warning_messages:
-        logging.warning(user_warning_message)
-
-    # Log error messages.
-
-    for user_error_message in user_error_messages:
-        logging.error(user_error_message)
-
-    # Log where to go for help.
-
-    if len(user_warning_messages) > 0 or len(user_error_messages) > 0:
-        logging.info(message_info(293))
-
-    # If there are error messages, exit.
-
-    if len(user_error_messages) > 0:
-        exit_error(697)
-
-
 def redact_configuration(config):
     ''' Return a shallow copy of config with certain keys removed. '''
     result = config.copy()
@@ -457,7 +429,7 @@ def create_keystore_truststore(config):
     return encoded_keystore
 
 
-def upload_aws_secrets_manager(config, base64_client_keystore):
+def upload_aws_secrets_manager(base64_client_keystore):
     ''' Upload client keystore to AWS secrets manager '''
 
     current_region = os.getenv("AWS_REGION")
@@ -500,8 +472,7 @@ def do_aws(subcommand, args):
     # Get context from CLI, environment variables, and ini files.
 
     config = get_configuration(subcommand, args)
-    validate_configuration(config)
-
+    
     # Prolog.
 
     logging.info(entry_template(config))
@@ -510,7 +481,7 @@ def do_aws(subcommand, args):
 
     if which("keytool") is not None:
         base64_client_keystore = create_keystore_truststore(config)
-        upload_aws_secrets_manager(config, base64_client_keystore)
+        upload_aws_secrets_manager(base64_client_keystore)
 
     # Epilog.
 
