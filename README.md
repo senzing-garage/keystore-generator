@@ -89,23 +89,12 @@ describing where we can improve.   Now on with the show...
     export SENZING_SUBCOMMAND=aws
     ```
 
-1. :thinking: If running an `aws` Senzing subcommand, specify stack and an etc directory
-
-   Example:
-
-    ```console
-    export SENZING_STACK_NAME=example_stack
-    export SENZING_ETC_DIR=/etc/opt/senzing
-    ```
-
 1. Run Docker container.
    Example:
 
     ```console
     sudo --preserve-env docker run \
-      --env SENZING_STACK_NAME \
       --env SENZING_SUBCOMMAND \
-      --env SENZING_ETC_DIR \
       --rm \
       senzing/keystore-generator
     ```
@@ -145,14 +134,6 @@ describing where we can improve.   Now on with the show...
 
     ```console
     export SENZING_SUBCOMMAND=aws
-    ```
-
-1. :thinking: If running an `aws` Senzing subcommand, specify stack....
-
-   Example:
-
-    ```console
-    export SENZING_STACK_NAME=example_stack
     ```
 
 1. Get versions of Docker images.
