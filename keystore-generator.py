@@ -472,7 +472,7 @@ def do_aws(subcommand, args):
     # Get context from CLI, environment variables, and ini files.
 
     config = get_configuration(subcommand, args)
-    
+
     # Prolog.
 
     logging.info(entry_template(config))
