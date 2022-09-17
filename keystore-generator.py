@@ -57,10 +57,6 @@ CONFIGURATION_LOCATOR = {
         "env": "SENZING_SLEEP_TIME_IN_SECONDS",
         "cli": "sleep-time-in-seconds"
     },
-    "stackname": {
-        "default": None,
-        "env": "SENZING_STACK_NAME",
-    },
     "subcommand": {
         "default": None,
         "env": "SENZING_SUBCOMMAND",
@@ -88,11 +84,6 @@ def get_parser():
                     "dest": "etc_dir",
                     "metavar": "SENZING_ETC_DIR",
                     "help": "Location of senzing etc directory. Default: /etc/opt/senzing"
-                },
-                "--stackname": {
-                    "dest": "stackname",
-                    "metavar": "SENZING_STACK_NAME",
-                    "help": "AWS cloudformation stack name. Default: none"
                 }
             }
         },
@@ -328,15 +319,6 @@ def validate_configuration(config):
     user_warning_messages = []
     user_error_messages = []
 
-    # Perform subcommand specific checking.
-
-    subcommand = config.get('subcommand')
-
-    if subcommand in ['aws']:
-
-        if config.get('stackname') is None:
-            user_error_messages.append(message_error(898, "SENZING_STACK_NAME"))
-
     # Log warning messages.
 
     for user_warning_message in user_warning_messages:
@@ -447,20 +429,24 @@ def create_keystore_truststore(config):
     etc_dir = config.get("etc_dir")
 
     # default keystore password is change-it
-    server_keystore_password = "change-it" if os.getenv("SENZING_API_SERVER_KEY_STORE_PASSWORD") is None else os.getenv("SENZING_API_SERVER_KEY_STORE_PASSWORD")
-    client_keystore_password = "change-it" if os.getenv("SENZING_API_SERVER_CLIENT_KEY_STORE_PASSWORD") is None else os.getenv("SENZING_API_SERVER_CLIENT_KEY_STORE_PASSWORD")
+    server_keystore_password = "change-it" if os.getenv("SENZING_API_SERVER_KEYSTORE_PASSWORD") is None else os.getenv("SENZING_API_SERVER_KEYSTORE_PASSWORD")
+    client_keystore_password = "change-it" if os.getenv("SENZING_API_CLIENT_KEYSTORE_PASSWORD") is None else os.getenv("SENZING_API_CLIENT_KEYSTORE_PASSWORD")
 
     # Create server key store
     os.system("keytool -genkey -alias sz-api-server -keystore {0}/sz-api-server-store.p12 -storetype PKCS12 -keyalg RSA -storepass {1} -validity 730 -keysize 2048 -dname 'CN=Unknown, OU=Unknown, O=Unknown, L=Unknown, ST=Unknown, C=Unknown'".format(etc_dir, server_keystore_password))
+    logging.info(message_info(157, "created sz-api-server-store.p12"))
 
     # Create client key store
     os.system("keytool -genkey -alias my-client -keystore {0}/my-client-key-store.p12 -storetype PKCS12 -keyalg RSA -storepass {1} -validity 730 -keysize 2048 -dname 'CN=Unknown, OU=Unknown, O=Unknown, L=Unknown, ST=Unknown, C=Unknown'".format(etc_dir, client_keystore_password))
+    logging.info(message_info(157, "created my-client-key-store.p12"))
 
     # Create client certificate with client key store
     os.system("keytool -export -keystore {0}/my-client-key-store.p12 -storepass {1} -storetype PKCS12 -alias my-client -file {0}/my-client.cer".format(etc_dir, client_keystore_password))
+    logging.info(message_info(157, "created my-client.cer"))
 
     # Add client certificate to client trust store
     os.system("keytool -import -file {0}/my-client.cer -alias my-client -keystore {0}/my-client-trust-store.p12 -storetype PKCS12 -storepass {1} -noprompt".format(etc_dir, client_keystore_password))
+    logging.info(message_info(157, "created my-client-trust-store.p12"))
 
     # base64 encode client key store
     encoded_keystore = ""
@@ -468,27 +454,22 @@ def create_keystore_truststore(config):
         encoded_keystore_bytes = base64.b64encode(keystore.read())
         encoded_keystore = encoded_keystore_bytes.decode('ascii')
 
-    logging.info(message_info(157, "sz-api-server-store.p12"))
-    logging.info(message_info(157, "my-client-key-store.p12"))
-    logging.info(message_info(157, "my-client.cer"))
-    logging.info(message_info(157, "my-client-trust-store.p12"))
-
     return encoded_keystore
 
 
 def upload_aws_secrets_manager(config, base64_client_keystore):
     ''' Upload client keystore to AWS secrets manager '''
 
-    aws_stack_name = config.get("stackname")
     current_region = os.getenv("AWS_REGION")
+    client_keystore_arn = os.getenv("SENZING_API_CLIENT_KEYSTORE_SECRET")
     client = boto3.Session(region_name=current_region).client('secretsmanager')
-    response = client.create_secret(
-        Description='Base64 representation of Senzing Api Server client key store',
-        Name=aws_stack_name + '-client-keystore-base64',
+
+    response = client.update_secret(
+        Description='Base64 representation of Senzing Api client key store',
+        SecretId=client_keystore_arn,
         SecretString=base64_client_keystore
     )
 
-    # double check with michael if this is the correct message code
     logging.info(message_info(299, response))
 
 # -----------------------------------------------------------------------------
