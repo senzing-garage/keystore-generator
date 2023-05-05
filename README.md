@@ -13,7 +13,7 @@ The `senzing/kenstore-generator` Docker image is a wrapper for use in Docker for
 To see all of the subcommands, run:
 
 ```console
-$ ./keystore-generator.py 
+$ ./keystore-generator.py
 usage: keystore-generator.py [-h] {aws,sleep,version,docker-acceptance-test} ...
 
 Initialize Senzing installation. For more information, see https://github.com/Senzing/keystore-generator
@@ -34,19 +34,12 @@ optional arguments:
 
 1. [Preamble](#preamble)
     1. [Legend](#legend)
-1. [Related artifacts](#related-artifacts)
 1. [Expectations](#expectations)
 1. [Demonstrate using Docker](#demonstrate-using-docker)
 1. [Demonstrate using docker-compose](#demonstrate-using-docker-compose)
-1. [Develop](#develop)
-    1. [Prerequisites for development](#prerequisites-for-development)
-    1. [Clone repository](#clone-repository)
-    1. [Build Docker image](#build-docker-image)
-1. [Advanced](#advanced)
-    1. [Configuration](#configuration)
-1. [Errors](#errors)
-1. [References](#references)
+1. [Configuration](#configuration)
 1. [License](#license)
+1. [References](#references)
 
 ## Preamble
 
@@ -67,11 +60,6 @@ describing where we can improve.   Now on with the show...
    Perhaps it's an optional step.
 1. :pencil2: - A "pencil" icon means that the instructions may need modification before performing.
 1. :warning: - A "warning" icon means that something tricky is happening, so pay attention.
-
-## Related artifacts
-
-1. [DockerHub](https://hub.docker.com/r/senzing/keystore-generator)
-1. [Helm Chart](https://github.com/Senzing/charts/tree/main/charts/senzing-keystore-generator)
 
 ## Expectations
 
@@ -169,75 +157,13 @@ describing where we can improve.   Now on with the show...
     1. There will be errors in some Docker logs as they wait for dependent services to become available.
        `docker-compose` isn't the best at orchestrating Docker container dependencies.
 
-## Develop
-
-The following instructions are used when modifying and building the Docker image.
-
-### Prerequisites for development
-
-:thinking: The following tasks need to be complete before proceeding.
-These are "one-time tasks" which may already have been completed.
-
-1. The following software programs need to be installed:
-    1. [git](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/install-git.md)
-    1. [make](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/install-make.md)
-    1. [docker](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/install-docker.md)
-
-### Clone repository
-
-For more information on environment variables,
-see [Environment Variables](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md).
-
-1. Set these environment variable values:
-
-    ```console
-    export GIT_ACCOUNT=senzing
-    export GIT_REPOSITORY=keystore-generator
-    export GIT_ACCOUNT_DIR=~/${GIT_ACCOUNT}.git
-    export GIT_REPOSITORY_DIR="${GIT_ACCOUNT_DIR}/${GIT_REPOSITORY}"
-    ```
-
-1. Using the environment variables values just set, follow steps in [clone-repository](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/clone-repository.md) to install the Git repository.
-
-### Build Docker image
-
-1. **Option #1:** Using `docker` command and GitHub.
-
-    ```console
-    sudo docker build \
-      --tag senzing/keystore-generator \
-      https://github.com/senzing/keystore-generator.git#main
-    ```
-
-1. **Option #2:** Using `docker` command and local repository.
-
-    ```console
-    cd ${GIT_REPOSITORY_DIR}
-    sudo docker build --tag senzing/keystore-generator .
-    ```
-
-1. **Option #3:** Using `make` command.
-
-    ```console
-    cd ${GIT_REPOSITORY_DIR}
-    sudo --preserve-env make docker-build
-    ```
-
-## Advanced
-
-### Configuration
+## Configuration
 
 Configuration values specified by environment variable or command line parameter.
 
 - **[SENZING_DATABASE_URL](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_database_url)**
 - **[SENZING_DEBUG](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_debug)**
 - **[SENZING_ENGINE_CONFIGURATION_JSON](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_engine-configuration_json)**
-
-## Errors
-
-1. See [docs/errors.md](docs/errors.md).
-
-## References
 
 ## License
 
@@ -259,3 +185,12 @@ along with any direct or indirect dependencies of the primary software being con
 As for any pre-built image usage,
 it is the image user's responsibility to ensure that any use of this image complies
 with any relevant licenses for all software contained within.
+
+## References
+
+1. [Development](docs/development.md)
+1. [Errors](docs/errors.md)
+1. [Examples](docs/examples.md)
+1. Related artifacts:
+    1. [DockerHub](https://hub.docker.com/r/senzing/keystore-generator)
+    1. [Helm Chart](https://github.com/Senzing/charts/tree/main/charts/senzing-keystore-generator)
