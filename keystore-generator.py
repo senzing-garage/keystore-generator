@@ -30,7 +30,7 @@ __version__ = "1.0.0"  # See https://www.python.org/dev/peps/pep-0396/
 __date__ = '2022-09-01'
 __updated__ = '2022-09-01'
 
-SENZING_PRODUCT_ID = "5032"  # See https://github.com/Senzing/knowledge-base/blob/main/lists/senzing-product-ids.md
+SENZING_PRODUCT_ID = "5032"  # See https://github.com/senzing-garage/knowledge-base/blob/main/lists/senzing-product-ids.md
 LOG_FORMAT = '%(asctime)s %(message)s'
 
 # The "configuration_locator" describes where configuration variables are in:
@@ -135,7 +135,7 @@ def get_parser():
 
     # Parse command line arguments.
 
-    parser = argparse.ArgumentParser(prog="keystore-generator.py", description="Initialize Senzing installation. For more information, see https://github.com/Senzing/keystore-generator")
+    parser = argparse.ArgumentParser(prog="keystore-generator.py", description="Initialize Senzing installation. For more information, see https://github.com/senzing-garage/keystore-generator")
     subparsers = parser.add_subparsers(dest='subcommand', help='Subcommands (SENZING_SUBCOMMAND):')
 
     for subcommand_key, subcommand_values in subcommands.items():
@@ -166,7 +166,7 @@ MESSAGE_DEBUG = 900
 MESSAGE_DICTIONARY = {
     "100": "senzing-" + SENZING_PRODUCT_ID + "{0:04d}I",
     "157": "{0} - Creating file",
-    "293": "For information on warnings and errors, see https://github.com/Senzing/keystore-generator#errors",
+    "293": "For information on warnings and errors, see https://github.com/senzing-garage/keystore-generator#errors",
     "294": "Version: {0}  Updated: {1}",
     "295": "Sleeping infinitely.",
     "296": "Sleeping {0} seconds.",
