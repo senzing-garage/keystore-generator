@@ -33,15 +33,16 @@ RUN pip3 install --upgrade pip \
  && pip3 install -r requirements.txt \
  && rm /requirements.txt
 
-# Install Java 11
+# Install Java-11.
 
-RUN wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public > gpg.key \
- && cat gpg.key | apt-key add - \
- && add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ \
- && apt update \
- && apt install -y adoptopenjdk-11-hotspot \
- && rm -rf /var/lib/apt/lists/* \
- && rm -f gpg.key
+RUN mkdir -p /etc/apt/keyrings \
+ && wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public > /etc/apt/keyrings/adoptium.asc
+
+RUN echo "deb [signed-by=/etc/apt/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" >> /etc/apt/sources.list
+
+RUN apt update \
+ && apt install -y temurin-11-jdk \
+ && rm -rf /var/lib/apt/lists/*
 
 # Copy files from repository.
 
