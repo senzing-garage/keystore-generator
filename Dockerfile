@@ -4,8 +4,8 @@ FROM ${BASE_IMAGE}
 ENV REFRESHED_AT=2022-09-01
 
 LABEL Name="senzing/keystore-generator" \
-      Maintainer="support@senzing.com" \
-      Version="1.0.0"
+  Maintainer="support@senzing.com" \
+  Version="1.0.0"
 
 # Define health check.
 
@@ -15,34 +15,34 @@ HEALTHCHECK CMD ["/app/healthcheck.sh"]
 
 USER root
 
-# Install packages via apt.
+# Install packages via apt-get.
 
 RUN apt-get update \
- && apt-get -y install \
-      gnupg2 \
-      python3 \
-      python3-pip \
-      software-properties-common \
-      wget \
- && rm -rf /var/lib/apt/lists/*
+  && apt-get -y install \
+  gnupg2 \
+  python3 \
+  python3-pip \
+  software-properties-common \
+  wget \
+  && rm -rf /var/lib/apt/lists/*
 
 # Install packages via PIP.
 
 COPY requirements.txt .
 RUN pip3 install --upgrade pip \
- && pip3 install -r requirements.txt \
- && rm /requirements.txt
+  && pip3 install -r requirements.txt \
+  && rm /requirements.txt
 
 # Install Java-11.
 
 RUN mkdir -p /etc/apt/keyrings \
- && wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public > /etc/apt/keyrings/adoptium.asc
+  && wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public > /etc/apt/keyrings/adoptium.asc
 
 RUN echo "deb [signed-by=/etc/apt/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" >> /etc/apt/sources.list
 
-RUN apt update \
- && apt install -y temurin-11-jdk \
- && rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+  && apt-get install -y temurin-11-jdk \
+  && rm -rf /var/lib/apt/lists/*
 
 # Copy files from repository.
 
