@@ -1,0 +1,44 @@
+{
+  // Version of the setting file.  Always 0.2
+  "version": "0.2",
+  // language - current active spelling language
+  "language": "en",
+  // words - list of words to be always considered correct
+  "words": [
+      "adoptium",
+      "alnum",
+      "analysing",
+      "boto",
+      "buildx",
+      "CCLA",
+      "CODEOWNER",
+      "Dockerfiles",
+      "DOCKERHUB",
+      "genkey",
+      "ICLA",
+      "keyalg",
+      "keyrings",
+      "keysize",
+      "keytool",
+      "noprompt",
+      "PKCS",
+      "projectatomic",
+      "pycache",
+      "pydev",
+      "pydevproject",
+      "pylint",
+      "rootfs",
+      "Senzing",
+      "shellcheck",
+      "stackoverflow",
+      "storepass",
+      "storetype",
+      "temurin",
+      "toplevel",
+      "truststore"
+    ],
+  "ignorePaths": [
+    ".git/**",
+    ".gitignore"
+  ]
+}
