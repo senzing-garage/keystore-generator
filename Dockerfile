@@ -22,7 +22,6 @@ RUN apt-get update \
   gnupg2 \
   python3 \
   python3-pip \
-  software-properties-common \
   wget \
   && rm -rf /var/lib/apt/lists/*
 
