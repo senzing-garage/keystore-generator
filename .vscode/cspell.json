@@ -12,6 +12,7 @@
     "buildx",
     "CCLA",
     "CODEOWNER",
+    "dearmor",
     "Dockerfiles",
     "DOCKERHUB",
     "genkey",
