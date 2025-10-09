@@ -21,7 +21,7 @@ USER root
 # Install packages via apt-get.
 
 RUN apt-get update \
- && apt-get -y install \
+ && apt-get -y --no-install-recommends install \
       git \
       python3 \
       python3-dev \
@@ -44,7 +44,7 @@ RUN python3 -m pip install --upgrade pip \
  && python3 -m pip install --requirement requirements.txt \
  && python3 -m pip install build
 
- # -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Stage: final
 # -----------------------------------------------------------------------------
 
@@ -67,21 +67,23 @@ USER root
 # Install packages via apt-get.
 
 RUN apt-get update \
- && apt-get -y install \
+ && apt-get -y --no-install-recommends install \
+      apt-transport-https \
+      ca-certificates \
       gnupg2 \
+      gpg \
       python3 \
       wget \
 && rm -rf /var/lib/apt/lists/*
 
-# Install Java-11.
+# Install Java 21.
 
-RUN mkdir -p /etc/apt/keyrings \
- && wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public > /etc/apt/keyrings/adoptium.asc
+RUN wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | gpg --dearmor | tee /etc/apt/trusted.gpg.d/adoptium.gpg > /dev/null
 
-RUN echo "deb [signed-by=/etc/apt/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" >> /etc/apt/sources.list
+RUN echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list
 
 RUN apt-get update \
- && apt-get install -y temurin-11-jdk \
+ && apt-get install -y --no-install-recommends temurin-21-jdk \
  && rm -rf /var/lib/apt/lists/*
 
 # Copy files from repository.
