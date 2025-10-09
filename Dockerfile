@@ -69,13 +69,14 @@ USER root
 RUN apt-get update \
  && apt-get -y --no-install-recommends install \
       apt-transport-https \
+      ca-certificates \
       gnupg2 \
       gpg \
       python3 \
       wget \
 && rm -rf /var/lib/apt/lists/*
 
-# Install Java-11.
+# Install Java 21.
 
 RUN wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | gpg --dearmor | tee /etc/apt/trusted.gpg.d/adoptium.gpg > /dev/null
 
