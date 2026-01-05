@@ -50,7 +50,7 @@ RUN python3 -m pip install --upgrade pip \
 
 FROM ${IMAGE_FINAL}
 
-ENV REFRESHED_AT=2022-09-01
+ENV REFRESHED_AT=2026-01-05
 
 LABEL Name="senzing/keystore-generator" \
       Maintainer="support@senzing.com" \
