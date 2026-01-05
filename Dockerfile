@@ -9,7 +9,7 @@ ARG IMAGE_FINAL=debian:13-slim@sha256:4bcb9db66237237d03b55b969271728dd3d955eaaa
 # -----------------------------------------------------------------------------
 
 FROM ${IMAGE_FINAL} AS builder
-ENV REFRESHED_AT=2025-09-01
+ENV REFRESHED_AT=2026-01-05
 LABEL Name="senzing/python-builder" \
       Maintainer="support@senzing.com" \
       Version="1.0.0"
