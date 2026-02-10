@@ -13,9 +13,11 @@
     "dearmor",
     "Dockerfiles",
     "DOCKERHUB",
+    "docktermj",
     "esbenp",
     "genkey",
     "ICLA",
+    "kernelsam",
     "keyalg",
     "keyrings",
     "keysize",
@@ -38,5 +40,8 @@
     "truststore",
     "venv"
   ],
-  "ignorePaths": [".git/**", ".gitignore"]
+  "ignorePaths": [
+    ".git/**",
+    ".gitignore"
+  ]
 }
